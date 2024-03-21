@@ -15,6 +15,14 @@ const jwt=require("jsonwebtoken");
 const port = process.env.PORT ;
 const SECRET_KEY=process.env.SECRET_KEY;
 const { sentizeuser } = require('./Common');
+const JwtStrategy=require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
+
+var opts={}
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = SECRET_KEY;
+
+
 Server.use(session({
   secret: 'keyboard cat',
   resave: false,
@@ -35,8 +43,6 @@ async function(Phone_Number, password, done) {
       return done(null , false ,{error:"User Not Exist"})
    }
    crypto.pbkdf2(password, user.salt, 31000,32,'sha256', async function (err,hash){
-       console.log('User.hash length:', user.hash.length);
-        console.log('Hash length:', password.length);
       if(!crypto.timingSafeEqual(user.hash,hash)){
          return done(null,false, {error:"Wrong Password "})
       }
@@ -51,6 +57,21 @@ async function(Phone_Number, password, done) {
 }
 ));
 
+
+passport.use('jwt' ,new JwtStrategy(opts,async function(jwt_payload, done) {
+  try {
+     const user = await User.findOne({Phone_Number:jwt_payload.Phone_Number});
+     if(user){
+        return done(null, sentizeuser(user))
+     }
+     else {
+        return done(null ,false ,{error:"Something Went Wrong"})
+     }
+  }
+  catch (err){
+     done(err)
+  }
+}));
 
 
 passport.serializeUser(function(user, cb) {

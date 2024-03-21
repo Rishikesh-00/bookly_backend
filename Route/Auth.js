@@ -4,6 +4,6 @@ const router=express.Router();
 const passport=require('passport')
 router.post('/Createuser',CreateAccount)
     .post('/login',passport.authenticate('local'),LoginUser)
-    .post('/check',CheckUser)
+    .post('/check',passport.authenticate('jwt'),CheckUser)
     .post('/updatepassword',UpdatePassword)
 exports.router=router;
